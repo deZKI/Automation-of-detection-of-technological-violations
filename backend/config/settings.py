@@ -23,8 +23,9 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'drf_yasg',
-
     'corsheaders',
+
+    'video'
 ]
 
 MIDDLEWARE = [

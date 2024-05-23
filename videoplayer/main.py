@@ -1,11 +1,11 @@
 import datetime
+import json
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import messagebox
 from tkVideoPlayer import TkinterVideo
 import requests
 import tempfile
 import threading
-import json
 
 class VideoPlayerApp(tk.Tk):
     def __init__(self):
@@ -21,11 +21,8 @@ class VideoPlayerApp(tk.Tk):
         control_frame = tk.Frame(self)
         control_frame.pack(fill="x")
 
-        self.load_video_btn = tk.Button(control_frame, text="Load Video", command=self.load_video)
-        self.load_video_btn.pack(side="left")
-
-        self.load_timecodes_btn = tk.Button(control_frame, text="Load Timecodes", command=self.load_timecodes)
-        self.load_timecodes_btn.pack(side="left")
+        self.load_videos_btn = tk.Button(control_frame, text="Load Videos", command=self.load_videos)
+        self.load_videos_btn.pack(side="left")
 
         self.play_pause_btn = tk.Button(control_frame, text="Play", command=self.play_pause)
         self.play_pause_btn.pack(side="left")
@@ -46,9 +43,9 @@ class VideoPlayerApp(tk.Tk):
         self.skip_plus_5sec = tk.Button(control_frame, text="Skip +5 sec", command=lambda: self.skip(5))
         self.skip_plus_5sec.pack(side="left")
 
-        self.timecode_listbox = tk.Listbox(self)
-        self.timecode_listbox.pack(side="left", fill="y")
-        self.timecode_listbox.bind('<<ListboxSelect>>', self.select_timecode)
+        self.video_listbox = tk.Listbox(self)
+        self.video_listbox.pack(side="left", fill="y")
+        self.video_listbox.bind('<<ListboxSelect>>', self.select_video)
 
         # Привязка событий
         self.vid_player.bind("<<Duration>>", self.update_duration)
@@ -57,38 +54,56 @@ class VideoPlayerApp(tk.Tk):
 
         self.playing = False
         self.temp_file = None
-        self.timecodes = []
+        self.video_list = []
 
-    def load_video(self):
-        """ Загрузка видеофайла """
-        file_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4 *.avi *.mov")])
-        if file_path:
-            self.vid_player.load(file_path)
-            self.progress_slider.config(to=0, from_=0)
-            self.play_pause_btn["text"] = "Play"
-            self.progress_value.set(0)
-            self.play_video()
+    def load_videos(self):
+        """ Загрузка списка видео с сервера """
+        try:
+            response = requests.get("http://localhost:8000/videos/video-list/")
+            self.video_list = response.json()
+            self.update_video_listbox()
+        except requests.RequestException as e:
+            messagebox.showerror("Error", f"Failed to load video list: {e}")
 
-    def load_timecodes(self):
-        """ Загрузка файла с таймкодами """
-        file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
-        if file_path:
-            with open(file_path, 'r') as f:
-                self.timecodes = json.load(f)
-            self.update_timecode_listbox()
+    def update_video_listbox(self):
+        """ Обновление списка видео в Listbox """
+        self.video_listbox.delete(0, tk.END)
+        for video in self.video_list:
+            self.video_listbox.insert(tk.END, video["title"])
 
-    def update_timecode_listbox(self):
-        """ Обновление списка таймкодов в Listbox """
-        self.timecode_listbox.delete(0, tk.END)
-        for timecode in self.timecodes:
-            self.timecode_listbox.insert(tk.END, f"{timecode['label']} - {str(datetime.timedelta(seconds=timecode['time']))}")
-
-    def select_timecode(self, event):
-        """ Выбор таймкода из списка """
-        selected_index = self.timecode_listbox.curselection()
+    def select_video(self, event):
+        """ Выбор видео из списка и загрузка """
+        selected_index = self.video_listbox.curselection()
         if selected_index:
-            selected_time = self.timecodes[selected_index[0]]['time']
-            self.seek(selected_time)
+            selected_video = self.video_list[selected_index[0]]
+            print(selected_video)
+            self.download_video(selected_video["url"])
+
+    def download_video(self, url):
+        """ Загрузка видеофайла с сервера """
+        self.playing = False
+        self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+        threading.Thread(target=self._download_video_thread, args=(url,)).start()
+
+    def _download_video_thread(self, url):
+        try:
+            with open(self.temp_file.name, 'wb') as f:
+                print(url)
+                response = requests.get(url, stream=True)
+                response.raise_for_status()
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    f.write(chunk)
+            self.load_video(self.temp_file.name)
+        except requests.RequestException as e:
+            messagebox.showerror("Error", f"Failed to download video: {e}")
+
+    def load_video(self, file_path):
+        """ Загрузка видео в плеер """
+        self.vid_player.load(file_path)
+        self.progress_slider.config(to=0, from_=0)
+        self.play_pause_btn["text"] = "Play"
+        self.progress_value.set(0)
+        self.play_video()
 
     def play_video(self):
         """ Воспроизведение видео """
