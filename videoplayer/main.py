@@ -1,11 +1,11 @@
 import datetime
-import json
 import tkinter as tk
 from tkinter import messagebox
 from tkVideoPlayer import TkinterVideo
 import requests
 import tempfile
 import threading
+
 
 class VideoPlayerApp(tk.Tk):
     def __init__(self):
@@ -34,7 +34,8 @@ class VideoPlayerApp(tk.Tk):
         self.start_time.pack(side="left")
 
         self.progress_value = tk.IntVar(self)
-        self.progress_slider = tk.Scale(control_frame, variable=self.progress_value, from_=0, to=0, orient="horizontal", command=self.seek)
+        self.progress_slider = tk.Scale(control_frame, variable=self.progress_value, from_=0, to=0, orient="horizontal",
+                                        command=self.seek)
         self.progress_slider.pack(side="left", fill="x", expand=True)
 
         self.end_time = tk.Label(control_frame, text=str(datetime.timedelta(seconds=0)))
@@ -148,6 +149,7 @@ class VideoPlayerApp(tk.Tk):
         self.progress_slider.set(self.progress_slider["to"])
         self.play_pause_btn["text"] = "Play"
         self.progress_slider.set(0)
+
 
 if __name__ == "__main__":
     app = VideoPlayerApp()
