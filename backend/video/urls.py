@@ -1,8 +1,12 @@
 from django.urls import path
-from .views import upload_video, video_list, video_stream
+from .views import (OriginalVideoListAPIView, OriginalVideoDownloadAPIView,
+                    ProceedVideoListAPIView, ProceedVideoDownloadAPIView,
+                    TimeCodeListAPIView)
 
 urlpatterns = [
-    path('upload/', upload_video, name='upload_video'),
-    path('', video_list, name='video_list'),
-    path('video/<int:video_id>/', video_stream, name='video_stream'),
+    path('api/videos/', OriginalVideoListAPIView.as_view(), name='original-video-list'),
+    path('api/videos/<int:pk>/download/', OriginalVideoDownloadAPIView.as_view(), name='original-video-download'),
+    path('api/proceed-videos/<int:original_video_id>/', ProceedVideoListAPIView.as_view(), name='proceed-video-list'),
+    path('api/proceed-videos/<int:pk>/download/', ProceedVideoDownloadAPIView.as_view(), name='proceed-video-download'),
+    path('api/timecodes/<int:proceed_video_id>/', TimeCodeListAPIView.as_view(), name='timecode-list'),
 ]
