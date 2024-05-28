@@ -1,3 +1,4 @@
+import os
 import datetime
 import tkinter as tk
 from tkinter import messagebox
@@ -5,6 +6,7 @@ from tkVideoPlayer import TkinterVideo
 import requests
 import tempfile
 import threading
+from typing import List, Dict, Optional, Any
 
 
 class VideoPlayerApp(tk.Tk):
@@ -12,6 +14,9 @@ class VideoPlayerApp(tk.Tk):
         super().__init__()
         self.title("Tkinter Video Player")
         self.geometry("800x600")
+
+        # Получение URL API из переменной окружения
+        self.api_url = os.getenv("API_URL", "http://localhost:8000/api")
 
         # Создание виджета для отображения видео
         self.vid_player = TkinterVideo(scaled=True, master=self)
@@ -21,7 +26,7 @@ class VideoPlayerApp(tk.Tk):
         control_frame = tk.Frame(self)
         control_frame.pack(fill="x")
 
-        self.load_videos_btn = tk.Button(control_frame, text="Load Videos", command=self.load_videos)
+        self.load_videos_btn = tk.Button(control_frame, text="Load Videos", command=self.load_original_videos)
         self.load_videos_btn.pack(side="left")
 
         self.play_pause_btn = tk.Button(control_frame, text="Play", command=self.play_pause)
@@ -44,9 +49,17 @@ class VideoPlayerApp(tk.Tk):
         self.skip_plus_5sec = tk.Button(control_frame, text="Skip +5 sec", command=lambda: self.skip(5))
         self.skip_plus_5sec.pack(side="left")
 
-        self.video_listbox = tk.Listbox(self)
-        self.video_listbox.pack(side="left", fill="y")
-        self.video_listbox.bind('<<ListboxSelect>>', self.select_video)
+        self.original_video_listbox = tk.Listbox(self)
+        self.original_video_listbox.pack(side="left", fill="y")
+        self.original_video_listbox.bind('<<ListboxSelect>>', self.select_original_video)
+
+        self.proceed_video_listbox = tk.Listbox(self)
+        self.proceed_video_listbox.pack(side="left", fill="y")
+        self.proceed_video_listbox.bind('<<ListboxSelect>>', self.select_proceed_video)
+
+        self.timecode_listbox = tk.Listbox(self)
+        self.timecode_listbox.pack(side="left", fill="y")
+        self.timecode_listbox.bind('<<ListboxSelect>>', self.select_timecode)
 
         # Привязка событий
         self.vid_player.bind("<<Duration>>", self.update_duration)
@@ -55,97 +68,142 @@ class VideoPlayerApp(tk.Tk):
 
         self.playing = False
         self.temp_file = None
-        self.video_list = []
+        self.original_video_list: List[Dict[str, Any]] = []
+        self.proceed_video_list: List[Dict[str, Any]] = []
+        self.timecodes: List[Dict[str, Any]] = []
+        self.selected_original_video_id: Optional[int] = None
+        self.selected_proceed_video_id: Optional[int] = None
 
-    def load_videos(self):
-        """ Загрузка списка видео с сервера """
+    def api_request(self, endpoint: str, method: str = "GET") -> Optional[Any]:
+        """Выполнение запроса к API"""
         try:
-            response = requests.get("http://localhost:8000/videos/video-list/")
-            self.video_list = response.json()
-            self.update_video_listbox()
+            url = f"{self.api_url}/{endpoint}"
+            response = requests.request(method, url)
+            response.raise_for_status()
+            return response.json()
         except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to load video list: {e}")
+            messagebox.showerror("Error", f"Failed to make request to {url}: {e}")
+            return None
 
-    def update_video_listbox(self):
-        """ Обновление списка видео в Listbox """
-        self.video_listbox.delete(0, tk.END)
-        for video in self.video_list:
-            self.video_listbox.insert(tk.END, video["title"])
+    def load_original_videos(self) -> None:
+        """Загрузка списка оригинальных видео с сервера"""
+        self.original_video_list = self.api_request("videos/") or []
+        self.update_listbox(self.original_video_listbox, [video["title"] for video in self.original_video_list])
 
-    def select_video(self, event):
-        """ Выбор видео из списка и загрузка """
-        selected_index = self.video_listbox.curselection()
+    def load_proceed_videos(self, original_video_id: int) -> None:
+        """Загрузка списка обработанных видео с сервера"""
+        self.proceed_video_list = self.api_request(f"proceed-videos/{original_video_id}/") or []
+        self.update_listbox(self.proceed_video_listbox, [video["title"] for video in self.proceed_video_list])
+
+    def load_timecodes(self, video_id: int) -> None:
+        """Загрузка таймкодов для выбранного видео"""
+        self.timecodes = self.api_request(f"timecodes/{video_id}/") or []
+        self.update_listbox(self.timecode_listbox, [
+            f"{timecode['prediction']} - {str(datetime.timedelta(seconds=timecode['time_in_seconds']))}"
+            for timecode in self.timecodes
+        ])
+
+    def update_listbox(self, listbox: tk.Listbox, items: List[str]) -> None:
+        """Обновление содержимого listbox"""
+        listbox.delete(0, tk.END)
+        for item in items:
+            listbox.insert(tk.END, item)
+
+    def select_original_video(self, event: tk.Event) -> None:
+        """Выбор видео из списка и загрузка"""
+        selected_index = self.original_video_listbox.curselection()
         if selected_index:
-            selected_video = self.video_list[selected_index[0]]
-            print(selected_video)
-            self.download_video(selected_video["url"])
+            selected_video = self.original_video_list[selected_index[0]]
+            if selected_video["id"] != self.selected_original_video_id:
+                self.selected_original_video_id = selected_video["id"]
+                self.load_proceed_videos(selected_video["id"])
 
-    def download_video(self, url):
-        """ Загрузка видеофайла с сервера """
+    def select_proceed_video(self, event: tk.Event) -> None:
+        selected_index = self.proceed_video_listbox.curselection()
+        if selected_index:
+            selected_video = self.proceed_video_list[selected_index[0]]
+            if selected_video["id"] != self.selected_proceed_video_id:
+                self.selected_proceed_video_id = selected_video["id"]
+                self.download_video(selected_video["id"])
+
+    def download_video(self, video_id: int) -> None:
+        """Загрузка видеофайла с сервера"""
         self.playing = False
         self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-        threading.Thread(target=self._download_video_thread, args=(url,)).start()
+        threading.Thread(target=self._download_video_thread, args=(video_id,)).start()
 
-    def _download_video_thread(self, url):
+    def _download_video_thread(self, video_id: int) -> None:
         try:
             with open(self.temp_file.name, 'wb') as f:
-                print(url)
-                response = requests.get(url, stream=True)
+                response = requests.get(f'{self.api_url}/proceed-videos/{video_id}/download/', stream=True)
                 response.raise_for_status()
                 for chunk in response.iter_content(chunk_size=1024 * 1024):
                     f.write(chunk)
             self.load_video(self.temp_file.name)
+            self.load_timecodes(video_id)
         except requests.RequestException as e:
             messagebox.showerror("Error", f"Failed to download video: {e}")
 
-    def load_video(self, file_path):
-        """ Загрузка видео в плеер """
+    def load_video(self, file_path: str) -> None:
+        """Загрузка видео в плеер"""
+        # Проверка на инициализацию объекта vid_player
+        if self.vid_player is None:
+            messagebox.showerror("Error", "Video player not initialized.")
+            return
+
         self.vid_player.load(file_path)
         self.progress_slider.config(to=0, from_=0)
         self.play_pause_btn["text"] = "Play"
         self.progress_value.set(0)
         self.play_video()
 
-    def play_video(self):
-        """ Воспроизведение видео """
+    def select_timecode(self, event: tk.Event) -> None:
+        """Выбор таймкода из списка"""
+        selected_index = self.timecode_listbox.curselection()
+        if selected_index:
+            selected_time = self.timecodes[selected_index[0]]['time_in_seconds']
+            self.seek(selected_time)
+
+    def play_video(self) -> None:
+        """Воспроизведение видео"""
         self.vid_player.play()
         self.play_pause_btn["text"] = "Pause"
 
-    def pause_video(self):
-        """ Пауза видео """
+    def pause_video(self) -> None:
+        """Пауза видео"""
         self.vid_player.pause()
         self.play_pause_btn["text"] = "Play"
 
-    def play_pause(self):
-        """ Переключение между воспроизведением и паузой """
+    def play_pause(self) -> None:
+        """Переключение между воспроизведением и паузой"""
         if self.vid_player.is_paused():
             self.play_video()
         else:
             self.pause_video()
 
-    def seek(self, value):
-        """ Перемотка видео на заданную позицию """
+    def seek(self, value: Any) -> None:
+        """Перемотка видео на заданную позицию"""
         self.vid_player.seek(int(float(value)))
 
-    def skip(self, value):
-        """ Перемотка видео вперед или назад на заданное количество секунд """
+    def skip(self, value: int) -> None:
+        """Перемотка видео вперед или назад на заданное количество секунд"""
         self.vid_player.seek(int(self.progress_slider.get()) + value)
         self.progress_value.set(self.progress_slider.get() + value)
 
-    def update_duration(self, event):
-        """ Обновление продолжительности видео """
+    def update_duration(self, event: tk.Event) -> None:
+        """Обновление продолжительности видео"""
         duration = self.vid_player.video_info()["duration"]
         self.end_time["text"] = str(datetime.timedelta(seconds=duration))
         self.progress_slider["to"] = duration
 
-    def update_scale(self, event):
-        """ Обновление текущей позиции видео на слайдере """
+    def update_scale(self, event: tk.Event) -> None:
+        """Обновление текущей позиции видео на слайдере"""
         current_time = self.vid_player.current_duration()
         self.progress_value.set(current_time)
         self.start_time["text"] = str(datetime.timedelta(seconds=current_time))
 
-    def video_ended(self, event):
-        """ Обработка окончания видео """
+    def video_ended(self, event: tk.Event) -> None:
+        """Обработка окончания видео"""
         self.progress_slider.set(self.progress_slider["to"])
         self.play_pause_btn["text"] = "Play"
         self.progress_slider.set(0)
