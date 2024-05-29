@@ -16,14 +16,13 @@ def format_time(seconds: int):
     return time.strftime('%H:%M:%S', time.gmtime(seconds))
 
 
-def process_video(original_video_id: int, proceed_video_id: ProceedVideo):
+def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo):
     """ Обработка оргинальнального видео и создание обработанного"""
-    original_video = OriginalVideo.objects.filter(id=original_video_id).first()
-    proceed_video = ProceedVideo.objects.filter(id=proceed_video_id).first()
     try:
         # Создание временных директорий для видео и Excel файлов
         with tempfile.TemporaryDirectory() as temp_dir:
-            output_video_path = os.path.join(temp_dir, f'processed_{os.path.basename(original_video.video.name)}')
+            output_video_path = os.path.join(temp_dir,
+                                             f'processed_{os.path.basename(original_video.video.name)}_proceed_video.id')
             output_excel_path = os.path.join(temp_dir, f'processed_{proceed_video.id}.xlsx')
 
             # Словарь для отслеживания объектов по ID
