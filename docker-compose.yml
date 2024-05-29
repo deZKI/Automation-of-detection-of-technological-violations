@@ -30,6 +30,25 @@ services:
     depends_on:
       - core
 
+  celery:
+    build: core
+    depends_on:
+      - core
+      - rabbitmq
+    command: celery -A config worker --concurrency=4 --loglevel=info  -P gevent
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres_db
+      - REDIS_HOST=redis
+      - RABBITMQ_HOST=rabbitmq
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672"
+    restart: always
 
 volumes:
   postgres_data:

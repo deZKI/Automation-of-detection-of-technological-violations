@@ -6,11 +6,12 @@ from django.http import StreamingHttpResponse, HttpResponse
 
 from wsgiref.util import FileWrapper
 
-from rest_framework import generics
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from .tasks import process_video_task
 from .models import OriginalVideo, ProceedVideo, TimeCode
 from .serializers import OriginalVideoSerializer, ProceedVideoSerializer, TimeCodeSerializer
 
@@ -23,18 +24,19 @@ class OriginalVideoListAPIView(APIView):
         serializer = OriginalVideoSerializer(videos, many=True)
         return Response(serializer.data)
 
-
-class UploadVideoView(generics.CreateAPIView):
-    queryset = OriginalVideo.objects.all()
-    serializer_class = OriginalVideoSerializer
-
+    @swagger_auto_schema(
+        operation_description="Загрузка нового оригинального видео",
+        request_body=OriginalVideoSerializer,
+        responses={HTTP_201_CREATED: OriginalVideoSerializer, HTTP_400_BAD_REQUEST: "Bad Request"}
+    )
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = OriginalVideoSerializer(data=request.data)
         if serializer.is_valid():
             original_video = serializer.save()
             process_video_task.delay(original_video.id)
             return Response(serializer.data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
 
 class ProceedVideoListAPIView(APIView):
     """ Получение списка обработанных видео по Оригинальному видео"""
