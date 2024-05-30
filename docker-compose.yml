@@ -31,7 +31,7 @@ services:
       - core
 
   celery:
-    build: core
+    build: backend
     depends_on:
       - core
       - rabbitmq
