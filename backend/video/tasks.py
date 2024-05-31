@@ -1,11 +1,11 @@
 from django.conf import settings
 
-from celery import shared_task
+from config.celery import app
 
 from ai.video import process_video
 from video.models import OriginalVideo, ProceedVideo
 
-@shared_task
+@app.task
 def process_video_task(original_video_id):
     try:
         original_video = OriginalVideo.objects.get(id=original_video_id)
