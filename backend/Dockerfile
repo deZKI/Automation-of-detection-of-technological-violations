@@ -3,6 +3,12 @@ FROM python:3.10-alpine
 
 # Установка рабочей директории в контейнере
 WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gfortran \
+    cmake \
+    && rm -rf /var/lib/apt/lists/* \
+RUN pip install numpy
 
 # Копирование файлов зависимостей
 COPY . /app
