@@ -1,5 +1,5 @@
 # Базовый образ
-FROM python:3.10-alpine
+FROM python:3.9-alpine
 
 # Install build tools
 RUN apk update && apk add --no-cache \
