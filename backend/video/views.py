@@ -13,6 +13,8 @@ from rest_framework.parsers import FormParser, MultiPartParser, FileUploadParser
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 
+from celery.result import AsyncResult
+
 from .tasks import process_video_task
 from .models import OriginalVideo, ProceedVideo, TimeCode
 from .serializers import OriginalVideoSerializer, ProceedVideoSerializer, TimeCodeSerializer
@@ -33,9 +35,20 @@ class OriginalVideoListAPIView(ModelViewSet):
         serializer = OriginalVideoSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            process_video_task.delay(serializer.data.id)
-            return Response(serializer.data, status=HTTP_201_CREATED)
+            task = process_video_task.delay(serializer.data['id'])
+            return Response({'id': serializer.data['id'], 'task_id': task.id}, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+
+class TaskStatusAPIView(APIView):
+    def get(self, request, task_id):
+        task_result = AsyncResult(task_id)
+        result = {
+            'task_id': task_id,
+            'status': task_result.status,
+            'result': task_result.result
+        }
+        return Response(result, status=200)
 
 
 class ProceedVideoListAPIView(APIView):
