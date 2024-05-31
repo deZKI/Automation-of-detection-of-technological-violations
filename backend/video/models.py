@@ -12,7 +12,7 @@ class OriginalVideo(models.Model):
             self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         super().save()
-        process_video_task.delay(self.id)
+        process_video_task(self.id)
 
 
 class ProceedVideo(models.Model):
