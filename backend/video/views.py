@@ -9,6 +9,8 @@ from wsgiref.util import FileWrapper
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
+from rest_framework.parsers import FormParser, MultiPartParser, FileUploadParser
+from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 
 from .tasks import process_video_task
@@ -16,13 +18,11 @@ from .models import OriginalVideo, ProceedVideo, TimeCode
 from .serializers import OriginalVideoSerializer, ProceedVideoSerializer, TimeCodeSerializer
 
 
-class OriginalVideoListAPIView(APIView):
+class OriginalVideoListAPIView(ModelViewSet):
     """ Получение списка оригинальных видео """
-
-    def get(self, request: HttpRequest):
-        videos = OriginalVideo.objects.all()
-        serializer = OriginalVideoSerializer(videos, many=True)
-        return Response(serializer.data)
+    queryset = OriginalVideo.objects.all()
+    serializer_class = OriginalVideoSerializer
+    parser_classes = (FormParser, MultiPartParser, FileUploadParser)
 
     @swagger_auto_schema(
         operation_description="Загрузка нового оригинального видео",

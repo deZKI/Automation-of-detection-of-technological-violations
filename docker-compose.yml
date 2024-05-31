@@ -35,7 +35,7 @@ services:
     depends_on:
       - core
       - rabbitmq
-    command: celery -A config worker --concurrency=4 --loglevel=info  -P gevent
+    command: celery -A config worker --concurrency=4 --loglevel=info
     env_file:
       - .env
     environment:

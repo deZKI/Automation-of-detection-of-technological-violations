@@ -4,7 +4,7 @@ from django.db import models
 class OriginalVideo(models.Model):
     """Изначальное необработанное видео"""
     title = models.CharField(max_length=100)
-    video = models.FileField(upload_to='videos/')
+    video = models.FileField(upload_to='videos/', blank=False)
 
 
 class ProceedVideo(models.Model):
