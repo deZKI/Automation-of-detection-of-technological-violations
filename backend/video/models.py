@@ -1,7 +1,5 @@
 from django.db import models
 
-from .tasks import process_video_task
-
 
 class OriginalVideo(models.Model):
     """Изначальное необработанное видео"""
@@ -11,6 +9,7 @@ class OriginalVideo(models.Model):
     def save(
             self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
+        from .tasks import process_video_task
         super().save()
         process_video_task(self.id)
 
