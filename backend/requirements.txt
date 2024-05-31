@@ -1,4 +1,3 @@
-amqp
 asgiref==3.8.1
 billiard==4.2.0
 celery==5.4.0
