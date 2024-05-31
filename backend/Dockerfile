@@ -1,14 +1,19 @@
 # Базовый образ
 FROM python:3.10-alpine
 
-# Установка рабочей директории в контейнере
-WORKDIR /app
+
+# Install build tools
 RUN apt-get update && apt-get install -y \
     build-essential \
     gfortran \
     cmake \
-    && rm -rf /var/lib/apt/lists/* \
-RUN pip install numpy
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip, setuptools, and wheel
+RUN pip install --upgrade pip setuptools wheel
+
+# Установка рабочей директории в контейнере
+WORKDIR /app
 
 # Копирование файлов зависимостей
 COPY . /app
