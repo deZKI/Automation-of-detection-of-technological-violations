@@ -11,7 +11,7 @@ class OriginalVideo(models.Model):
     ):
         from .tasks import process_video_task
         super().save()
-        process_video_task(self.id)
+        process_video_task.delay(self.id)
 
 
 class ProceedVideo(models.Model):
