@@ -5,12 +5,10 @@ import ultralytics
 from pathlib import Path
 from dotenv import load_dotenv
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = True
-
 
 # Загружаем модель YOLOv8 из указанного пути
 
@@ -20,11 +18,9 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 MODEL.to(DEVICE)
 AI_VERSION = os.getenv("AI_VERSION")
 
-
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
 CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -99,7 +95,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+RABBITMQ = {
+    "PROTOCOL": "amqp",
+    "HOST": os.getenv("RABBITMQ_HOST", "localhost"),
+    "PORT": os.getenv("RABBITMQ_PORT", 5672),
+    "USER": os.getenv("RABBITMQ_USER", "guest"),
+    "PASSWORD": os.getenv("RABBITMQ_PASSWORD", "guest"),
+}
 
-# Celery
-CELERY_BROKER_URL = 'redis://{}:{}'.format(os.getenv('REDIS_HOST'), os.getenv('REDIS_PORT'))
-CELERY_RESULT_BACKEND = 'redis://{}:{}'.format(os.getenv('REDIS_HOST'), os.getenv('REDIS_PORT'))
+CELERY_BROKER_URL = f"{RABBITMQ['PROTOCOL']}://{RABBITMQ['USER']}:{RABBITMQ['PASSWORD']}@{RABBITMQ['HOST']}:{RABBITMQ['PORT']}"
