@@ -13,7 +13,6 @@ from rest_framework.parsers import FormParser, MultiPartParser, FileUploadParser
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 
-from .tasks import process_video_task
 from .models import OriginalVideo, ProceedVideo, TimeCode
 from .serializers import OriginalVideoSerializer, ProceedVideoSerializer, TimeCodeSerializer
 
@@ -32,8 +31,7 @@ class OriginalVideoListAPIView(ModelViewSet):
     def post(self, request, *args, **kwargs):
         serializer = OriginalVideoSerializer(data=request.data)
         if serializer.is_valid():
-            original_video = serializer.save()
-            process_video_task.delay(original_video.id)
+            serializer.save()
             return Response(serializer.data, status=HTTP_201_CREATED)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 

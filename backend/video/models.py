@@ -1,10 +1,18 @@
 from django.db import models
 
+from .tasks import process_video_task
+
 
 class OriginalVideo(models.Model):
     """Изначальное необработанное видео"""
     title = models.CharField(max_length=100)
     video = models.FileField(upload_to='videos/', blank=False)
+
+    def save(
+            self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        super().save()
+        process_video_task.delay(self.id)
 
 
 class ProceedVideo(models.Model):
