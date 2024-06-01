@@ -157,7 +157,7 @@ class VideoPlayerApp(tk.Tk):
         """Download PDF file for the selected proceed video."""
         if self.selected_proceed_video_id:
             threading.Thread(target=self._download_file_thread,
-                             args=(self.selected_pdf_url, self.selected_proceed_video_id, 'pdf')).start()
+                             args=(self.selected_pdf_url, 'pdf')).start()
         else:
             messagebox.showwarning("Видео не выбрано", "Выберите видео!.")
 
@@ -165,7 +165,7 @@ class VideoPlayerApp(tk.Tk):
         """Download Excel file for the selected proceed video."""
         if self.selected_proceed_video_id:
             threading.Thread(target=self._download_file_thread,
-                             args=(self.selected_excel_url, self.selected_proceed_video_id, 'excel')).start()
+                             args=(self.selected_excel_url, 'excel')).start()
         else:
             messagebox.showwarning("Видео не выбрано", "Выберите видео!")
 
