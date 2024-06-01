@@ -1,0 +1,26 @@
+.container {
+  width: 100%;
+  height: 100vh;
+  background-color: var(--primary-background);
+}
+
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  max-width: 1340px;
+  height: 100%;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 32px;
+  border-radius: 52px;
+  width: 100%;
+  height: 600px;
+  background-color: var(--primary-panel-background);
+}
