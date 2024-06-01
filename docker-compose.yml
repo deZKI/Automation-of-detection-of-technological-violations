@@ -44,6 +44,9 @@ services:
 
   celery:
     build: backend
+    volumes:
+      - static_volume:/app/static/
+      - media_volume:/app/media/
     depends_on:
       - core
       - rabbitmq
