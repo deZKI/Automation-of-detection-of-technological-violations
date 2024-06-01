@@ -23,8 +23,9 @@
 }
 
 :root {
-  --loaded-video:               #00c229;
+  --video-success:              #00c229;
   --primary-color:              #DA4216;
+  --button-hover:               #EE5D21;
   --entry-color:                #2C2C2C;
   --panel-text:                 #474747;
   --referance-color:            #565658;
