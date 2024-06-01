@@ -1,29 +1,37 @@
-# Базовый образ
-FROM python:3.12-alpine
+# Использование базового образа Debian
+FROM python:3.12-slim
 
-# Install build tools
-RUN apk update && apk add --no-cache \
-    build-base \
-    gfortran \
+# Обновление пакетов и установка зависимостей для сборки
+RUN apt-get update && apt-get install -y \
+    build-essential \
     cmake \
-    libjpeg-turbo-dev \
+    gfortran \
+    libjpeg-dev \
     libpng-dev \
-    tiff-dev \
-    gtk+2.0-dev \
-    ffmpeg-dev \
-    && rm -rf /var/cache/apk/*
+    libtiff-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libgtk2.0-dev \
+    libv4l-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip, setuptools, and wheel
+# Обновление pip, setuptools и wheel
 RUN pip install --upgrade pip setuptools wheel
+
+# Установка numpy
+RUN pip install numpy
+
+# Установка остальных зависимостей
+COPY requirements.txt /app/
+RUN pip install -r /app/requirements.txt
 
 # Установка рабочей директории в контейнере
 WORKDIR /app
 
-# Копирование файлов зависимостей
+# Копирование всех файлов проекта
 COPY . /app
-
-# Install Python dependencies
-RUN pip install -r requirements.txt
 
 # Делаем entrypoint скрипт исполняемым
 RUN chmod +x entrypoint.sh
