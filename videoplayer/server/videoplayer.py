@@ -1,12 +1,18 @@
 import os
 import datetime
 import tkinter as tk
-from tkinter import messagebox
-from tkVideoPlayer import TkinterVideo
+
 import requests
 import tempfile
 import threading
+
+from tkinter import messagebox
+from tkVideoPlayer import TkinterVideo
 from typing import List, Dict, Optional, Any
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class VideoPlayerApp(tk.Tk):
@@ -168,7 +174,7 @@ class VideoPlayerApp(tk.Tk):
             return
 
         filepath = tk.filedialog.askopenfilename(title="Select a Video File",
-                                              filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")])
+                                                 filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")])
         if not filepath:
             messagebox.showwarning("Upload Cancelled", "Upload cancelled (no file selected).")
             return
