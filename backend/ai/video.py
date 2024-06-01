@@ -5,6 +5,8 @@ import tempfile
 import pandas as pd
 import cv2
 
+from tqdm import tqdm
+
 from django.conf import settings
 from django.core.files.base import ContentFile
 
@@ -21,8 +23,7 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo):
     try:
         # Создание временных директорий для видео и Excel файлов
         with tempfile.TemporaryDirectory() as temp_dir:
-            output_video_path = os.path.join(temp_dir,
-                                             f'processed_{os.path.basename(original_video.video.name)}_proceed_video.id')
+            output_video_path = os.path.join(temp_dir, f'processed_{os.path.basename(original_video.video.name)}')
             output_excel_path = os.path.join(temp_dir, f'processed_{proceed_video.id}.xlsx')
 
             # Словарь для отслеживания объектов по ID
@@ -40,51 +41,56 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo):
             model = settings.MODEL
             device = settings.DEVICE
 
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    break
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-                results = model.track(frame, device=device, verbose=False, conf=0.4, tracker="bytetrack.yaml")[0]
-                frame_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+            with tqdm(total=total_frames, desc="Processing Video") as pbar:
+                while cap.isOpened():
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
 
-                if results.boxes:
-                    bboxes = results.boxes.xyxy
-                    clss = results.boxes.cls.cpu().tolist()
-                    ids = results.boxes.id
-                    ids = ids.cpu().tolist() if ids is not None else []
+                    results = model.track(frame, device=device, verbose=False, conf=0.4, tracker="bytetrack.yaml")[0]
+                    frame_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
 
-                    for bbox, cls, obj_id in zip(bboxes, clss, ids):
-                        if obj_id not in tracked_objects:
-                            tracked_objects[obj_id] = {'start': frame_time, 'end': frame_time, 'fraud': False}
+                    if results.boxes:
+                        bboxes = results.boxes.xyxy
+                        clss = results.boxes.cls.cpu().tolist()
+                        ids = results.boxes.id
+                        ids = ids.cpu().tolist() if ids is not None else []
 
-                        contains_protection = any(
-                            other_cls in {0, 2, 5} and
-                            other_bbox[0] >= bbox[0] and
-                            other_bbox[1] >= bbox[1] and
-                            other_bbox[2] <= bbox[2] and
-                            other_bbox[3] <= bbox[3]
-                            for other_bbox, other_cls in zip(bboxes, clss)
-                        )
-                        contains_head = any(
-                            other_cls == 1 and
-                            other_bbox[0] >= bbox[0] and
-                            other_bbox[1] >= bbox[1] and
-                            other_bbox[2] <= bbox[2] and
-                            other_bbox[3] <= bbox[3]
-                            for other_bbox, other_cls in zip(bboxes, clss)
-                        )
-                        if not contains_protection or contains_head:
-                            tracked_objects[obj_id]['fraud'] = True
-                            tracked_objects[obj_id]['end'] = frame_time
-                        else:
-                            tracked_objects[obj_id]['fraud'] = False
+                        for bbox, cls, obj_id in zip(bboxes, clss, ids):
+                            if obj_id not in tracked_objects:
+                                tracked_objects[obj_id] = {'start': frame_time, 'end': frame_time, 'fraud': False}
 
-                        cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
-                        cv2.putText(frame, f"ID: {int(obj_id)}", (int(bbox[0]), int(bbox[1]) - 10),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                            contains_protection = any(
+                                other_cls in {0, 2, 5} and
+                                other_bbox[0] >= bbox[0] and
+                                other_bbox[1] >= bbox[1] and
+                                other_bbox[2] <= bbox[2] and
+                                other_bbox[3] <= bbox[3]
+                                for other_bbox, other_cls in zip(bboxes, clss)
+                            )
+                            contains_head = any(
+                                other_cls == 1 and
+                                other_bbox[0] >= bbox[0] and
+                                other_bbox[1] >= bbox[1] and
+                                other_bbox[2] <= bbox[2] and
+                                other_bbox[3] <= bbox[3]
+                                for other_bbox, other_cls in zip(bboxes, clss)
+                            )
+                            if not contains_protection or contains_head:
+                                tracked_objects[obj_id]['fraud'] = True
+                                tracked_objects[obj_id]['end'] = frame_time
+                            else:
+                                tracked_objects[obj_id]['fraud'] = False
 
-                out.write(frame)
+                            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])),
+                                          (0, 255, 0), 2)
+                            cv2.putText(frame, f"ID: {int(obj_id)}", (int(bbox[0]), int(bbox[1]) - 10),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+                    out.write(frame)
+                    pbar.update(1)
 
             cap.release()
             out.release()
