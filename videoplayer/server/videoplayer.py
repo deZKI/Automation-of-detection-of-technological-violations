@@ -33,16 +33,16 @@ class VideoPlayerApp(tk.Tk):
         control_frame = tk.Frame(self)
         control_frame.pack(fill="x")
 
-        self.load_videos_btn = tk.Button(control_frame, text="", command=self.load_original_videos)
+        self.load_videos_btn = tk.Button(control_frame, text="Загрузить видео", command=self.load_original_videos)
         self.load_videos_btn.pack(side="left")
 
-        self.upload_video_btn = tk.Button(control_frame, text="Upload Video", command=self.upload_video)
+        self.upload_video_btn = tk.Button(control_frame, text="Выгрузить видео", command=self.upload_video)
         self.upload_video_btn.pack(side="left")
 
         self.play_pause_btn = tk.Button(control_frame, text="Play", command=self.play_pause)
         self.play_pause_btn.pack(side="left")
 
-        self.skip_minus_5sec = tk.Button(control_frame, text="Skip -5 sec", command=lambda: self.skip(-5))
+        self.skip_minus_5sec = tk.Button(control_frame, text="-5 sec", command=lambda: self.skip(-5))
         self.skip_minus_5sec.pack(side="left")
 
         self.start_time = tk.Label(control_frame, text=str(datetime.timedelta(seconds=0)))
@@ -56,7 +56,7 @@ class VideoPlayerApp(tk.Tk):
         self.end_time = tk.Label(control_frame, text=str(datetime.timedelta(seconds=0)))
         self.end_time.pack(side="left")
 
-        self.skip_plus_5sec = tk.Button(control_frame, text="Skip +5 sec", command=lambda: self.skip(5))
+        self.skip_plus_5sec = tk.Button(control_frame, text="+5 sec", command=lambda: self.skip(5))
         self.skip_plus_5sec.pack(side="left")
 
         self.original_video_listbox = tk.Listbox(self)
@@ -71,10 +71,10 @@ class VideoPlayerApp(tk.Tk):
         self.timecode_listbox.pack(side="left", fill="y")
         self.timecode_listbox.bind('<<ListboxSelect>>', self.select_timecode)
 
-        self.download_pdf_btn = tk.Button(control_frame, text="Download PDF", command=self.download_pdf)
+        self.download_pdf_btn = tk.Button(text="Загрузить PDF", command=self.download_pdf)
         self.download_pdf_btn.pack(side="left", fill="y")
 
-        self.download_excel_btn = tk.Button(control_frame, text="Download Excel", command=self.download_excel)
+        self.download_excel_btn = tk.Button(text="Загрузить Excel", command=self.download_excel)
         self.download_excel_btn.pack(side="left", fill="y")
 
         # Привязка событий
@@ -101,7 +101,7 @@ class VideoPlayerApp(tk.Tk):
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to make request to {url}: {e}")
+            messagebox.showerror("Error", f"Ошибка в созданиие запроса на сервер {url}: {e}")
             return None
 
     def load_original_videos(self) -> None:
@@ -159,7 +159,7 @@ class VideoPlayerApp(tk.Tk):
             threading.Thread(target=self._download_file_thread,
                              args=(self.selected_pdf_url, self.selected_proceed_video_id, 'pdf')).start()
         else:
-            messagebox.showwarning("No Video Selected", "Please select a proceed video to download its PDF.")
+            messagebox.showwarning("Видео не выбрано", "Выберите видео!.")
 
     def download_excel(self) -> None:
         """Download Excel file for the selected proceed video."""
@@ -167,7 +167,7 @@ class VideoPlayerApp(tk.Tk):
             threading.Thread(target=self._download_file_thread,
                              args=(self.selected_excel_url, self.selected_proceed_video_id, 'excel')).start()
         else:
-            messagebox.showwarning("No Video Selected", "Please select a proceed video to download its Excel.")
+            messagebox.showwarning("Видео не выбрано", "Выберите видео!")
 
     def _download_file_thread(self, url: str, file_type: str) -> None:
         try:
@@ -182,7 +182,7 @@ class VideoPlayerApp(tk.Tk):
             with open(file_name, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=1024 * 1024):
                     f.write(chunk)
-            messagebox.showinfo("Download Successful", f"The {file_type.upper()} file was downloaded successfully!")
+            messagebox.showinfo("Успешно", f"The {file_type.upper()} загружен успешно!")
             os.startfile(file_name)
         except Exception as error:
             print(error)
@@ -197,13 +197,13 @@ class VideoPlayerApp(tk.Tk):
             self.load_video(self.temp_file.name)
             self.load_timecodes(video_id)
         except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to download video: {e}")
+            messagebox.showerror("Error", f"Ошибка в загрузке файла: {e}")
 
     def load_video(self, file_path: str) -> None:
         """Загрузка видео в плеер"""
         # Проверка на инициализацию объекта vid_player
         if self.vid_player is None:
-            messagebox.showerror("Error", "Video player not initialized.")
+            messagebox.showerror("Error", "Видеоплеер не запущен.")
             return
 
         self.vid_player.load(file_path)
@@ -214,15 +214,15 @@ class VideoPlayerApp(tk.Tk):
 
     def upload_video(self):
         """Prompt user for video details and upload video to the server."""
-        title = tk.simpledialog.askstring("Video Title", "Enter the title of the video:")
+        title = tk.simpledialog.askstring("Название видео", "Введите название видео:")
         if not title:
-            messagebox.showwarning("Upload Cancelled", "Upload cancelled (no title provided).")
+            messagebox.showwarning("Выгрузка отменена", "Название не может быть пустым.")
             return
 
-        filepath = tk.filedialog.askopenfilename(title="Select a Video File",
+        filepath = tk.filedialog.askopenfilename(title="Выберите видеофайл",
                                                  filetypes=[("Video files", "*.mp4 *.avi *.mov *.mkv")])
         if not filepath:
-            messagebox.showwarning("Upload Cancelled", "Upload cancelled (no file selected).")
+            messagebox.showwarning("Выгрузка отменена", "Нет файла.")
             return
 
         files = {'video': open(filepath, 'rb')}
@@ -230,9 +230,9 @@ class VideoPlayerApp(tk.Tk):
         try:
             response = requests.post(f"{self.api_url}/videos/", files=files, data=data)
             response.raise_for_status()
-            messagebox.showinfo("Upload Successful", "The video was uploaded successfully!")
+            messagebox.showinfo("Успешно", "Видео успешно выгружено!")
         except requests.RequestException as e:
-            messagebox.showerror("Upload Failed", f"Failed to upload video: {e}")
+            messagebox.showerror("Ошибка", f"Ошибка: {e}")
 
     def select_timecode(self, event: tk.Event) -> None:
         """Выбор таймкода из списка"""
