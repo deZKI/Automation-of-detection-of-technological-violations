@@ -18,7 +18,7 @@ load_dotenv()
 class VideoPlayerApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Tkinter Video Player")
+        self.title("RZD Видеоплеер нарушений")
         self.geometry("1200x600")
 
         # Получение URL API из переменной окружения
@@ -33,7 +33,7 @@ class VideoPlayerApp(tk.Tk):
         control_frame = tk.Frame(self)
         control_frame.pack(fill="x")
 
-        self.load_videos_btn = tk.Button(control_frame, text="Load Videos", command=self.load_original_videos)
+        self.load_videos_btn = tk.Button(control_frame, text="", command=self.load_original_videos)
         self.load_videos_btn.pack(side="left")
 
         self.upload_video_btn = tk.Button(control_frame, text="Upload Video", command=self.upload_video)
