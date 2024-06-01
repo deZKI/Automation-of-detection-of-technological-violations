@@ -4,7 +4,6 @@ import tempfile
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Использование безголового backend для Matplotlib
-import matplotlib.pyplot as plt
 import pandas as pd
 import cv2
 import io
@@ -240,8 +239,8 @@ def create_pdf_report(violations, output_pdf_path, frame_width, frame_height):
 
     for violation in violations:
         file_text = f"File: {violation['file']}"
-        start_time_text = f"Start Time: {violation['start_time']}"
-        end_time_text = f"End Time: {violation['end_time']}"
+        start_time_text = f"Start Time: {format_time(time_str_to_seconds(violation['start_time']))}"
+        end_time_text = f"End Time: {format_time(time_str_to_seconds(violation['end_time']))}"
         violation_text = f"Violation: {violation['violation']}"
 
         text_data = [
@@ -251,29 +250,33 @@ def create_pdf_report(violations, output_pdf_path, frame_width, frame_height):
             Paragraph(violation_text, normal_style)
         ]
 
-        # Create image from frame directly to memory
-        frame_img = np.zeros((ANNOTATED_IMAGE_HEIGHT, ANNOTATED_IMAGE_WIDTH, 3), dtype=np.uint8)
-        x1, y1, x2, y2 = map(int, [
-            violation['bbox'][0] * frame_width, violation['bbox'][1] * frame_height,
-            violation['bbox'][2] * frame_width, violation['bbox'][3] * frame_height
-        ])
-        cv2.rectangle(frame_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-        cv2.putText(frame_img, violation['violation'], (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+        if 'bbox' in violation:
+            frame_img = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
+            x1, y1, x2, y2 = map(int, [
+                violation['bbox'][0] * frame_width, violation['bbox'][1] * frame_height,
+                violation['bbox'][2] * frame_width, violation['bbox'][3] * frame_height
+            ])
+            cv2.rectangle(frame_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            cv2.putText(frame_img, violation['violation'], (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
-        _, buffer = cv2.imencode('.jpg', frame_img)
-        img_buffer = io.BytesIO(buffer)
+            _, buffer = cv2.imencode('.jpg', frame_img)
+            img_buffer = io.BytesIO(buffer)
 
-        img = ReportLabImage(img_buffer, width=ANNOTATED_IMAGE_WIDTH, height=ANNOTATED_IMAGE_HEIGHT)
-        img.hAlign = 'LEFT'
-        table_data = [
-            [text_data, img]
-        ]
-        table = Table(table_data, colWidths=TABLE_COLUMN_WIDTHS)
-        table.setStyle(TableStyle([
-            ('VALIGN', (0, 0), (0, 0), 'TOP')
-        ]))
-        elements.append(table)
-        elements.append(Spacer(1, 20))
+            img = ReportLabImage(img_buffer, width=ANNOTATED_IMAGE_WIDTH, height=ANNOTATED_IMAGE_HEIGHT)
+            img.hAlign = 'LEFT'
+            table_data = [
+                [text_data, img]
+            ]
+            table = Table(table_data, colWidths=TABLE_COLUMN_WIDTHS)
+            table.setStyle(TableStyle([
+                ('VALIGN', (0, 0), (0, 0), 'TOP')
+            ]))
+            elements.append(table)
+            elements.append(Spacer(1, 20))
+        else:
+            for paragraph in text_data:
+                elements.append(paragraph)
+            elements.append(Spacer(1, 20))
 
     doc.build(elements)
 
