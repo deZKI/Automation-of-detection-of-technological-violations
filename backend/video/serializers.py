@@ -11,7 +11,7 @@ class OriginalVideoSerializer(serializers.ModelSerializer):
 class ProceedVideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProceedVideo
-        fields = ['id', 'title', 'original_video', 'version', 'video']
+        fields = ['id', 'title', 'original_video', 'version', 'video', 'excel_file', 'pdf_file']
 
 
 class TimeCodeSerializer(serializers.ModelSerializer):

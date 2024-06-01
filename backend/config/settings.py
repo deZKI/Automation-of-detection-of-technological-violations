@@ -1,6 +1,4 @@
 import os
-import torch
-import ultralytics
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -9,14 +7,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = True
-
-# Загружаем модель YOLOv8 из указанного пути
-
-MODEL = ultralytics.YOLO('ai/best.pt')
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# Определяем устройство для вычислений (используем GPU, если доступно)
-MODEL.to(DEVICE)
-AI_VERSION = os.getenv("AI_VERSION")
 
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']

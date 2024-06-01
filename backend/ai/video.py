@@ -3,6 +3,8 @@ import time
 import tempfile
 import numpy as np
 import matplotlib
+import torch
+import ultralytics
 matplotlib.use('Agg')  # Использование безголового backend для Matplotlib
 import pandas as pd
 import cv2
@@ -16,7 +18,6 @@ from reportlab.platypus.flowables import Image as ReportLabImage
 
 from tqdm import tqdm
 
-from django.conf import settings
 from django.core.files.base import ContentFile
 
 from video.models import OriginalVideo, ProceedVideo, TimeCode
@@ -84,8 +85,12 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo, fr
             current_violation = None
             violation_start_frame = None
             violations_logged = []
+            # Загружаем модель YOLOv8 из указанного пути
 
-            model = settings.MODEL
+            model = ultralytics.YOLO('ai/best.pt')
+            DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            # Определяем устройство для вычислений (используем GPU, если доступно)
+            model.to(DEVICE)
 
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -99,7 +104,7 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo, fr
                     image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
                     # Выполнение трекинга объектов с помощью модели YOLOv8
-                    results = model(image_rgb, conf=CONFIDENCE_THRESHOLD, verbose=False)
+                    results = model(image_rgb, conf=CONFIDENCE_THRESHOLD)
 
                     predictions = results[0].boxes
                     labels = predictions.cls.cpu().numpy()
