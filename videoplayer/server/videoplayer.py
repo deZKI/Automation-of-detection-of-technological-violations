@@ -6,7 +6,7 @@ import requests
 import tempfile
 import threading
 
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from tkVideoPlayer import TkinterVideo
 from typing import List, Dict, Optional, Any
 
@@ -19,10 +19,11 @@ class VideoPlayerApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Tkinter Video Player")
-        self.geometry("800x600")
+        self.geometry("1200x600")
 
         # Получение URL API из переменной окружения
         self.api_url = os.getenv("API_URL", "http://95.163.223.21/api")
+        self.media_url = os.getenv("MEDIA_URL", "http://95.163.223.21")
 
         # Создание виджета для отображения видео
         self.vid_player = TkinterVideo(scaled=True, master=self)
@@ -70,6 +71,12 @@ class VideoPlayerApp(tk.Tk):
         self.timecode_listbox.pack(side="left", fill="y")
         self.timecode_listbox.bind('<<ListboxSelect>>', self.select_timecode)
 
+        self.download_pdf_btn = tk.Button(control_frame, text="Download PDF", command=self.download_pdf)
+        self.download_pdf_btn.pack(side="left", fill="y")
+
+        self.download_excel_btn = tk.Button(control_frame, text="Download Excel", command=self.download_excel)
+        self.download_excel_btn.pack(side="left", fill="y")
+
         # Привязка событий
         self.vid_player.bind("<<Duration>>", self.update_duration)
         self.vid_player.bind("<<SecondChanged>>", self.update_scale)
@@ -82,6 +89,9 @@ class VideoPlayerApp(tk.Tk):
         self.timecodes: List[Dict[str, Any]] = []
         self.selected_original_video_id: Optional[int] = None
         self.selected_proceed_video_id: Optional[int] = None
+
+        self.selected_pdf_url: Optional[str] = None
+        self.selected_excel_url: Optional[str] = None
 
     def api_request(self, endpoint: str, method: str = "GET") -> Optional[Any]:
         """Выполнение запроса к API"""
@@ -132,6 +142,8 @@ class VideoPlayerApp(tk.Tk):
         if selected_index:
             selected_video = self.proceed_video_list[selected_index[0]]
             if selected_video["id"] != self.selected_proceed_video_id:
+                self.selected_pdf_url = selected_video["pdf_file"]
+                self.selected_excel_url = selected_video["excel_file"]
                 self.selected_proceed_video_id = selected_video["id"]
                 self.download_video(selected_video["id"])
 
@@ -140,6 +152,40 @@ class VideoPlayerApp(tk.Tk):
         self.playing = False
         self.temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
         threading.Thread(target=self._download_video_thread, args=(video_id,)).start()
+
+    def download_pdf(self) -> None:
+        """Download PDF file for the selected proceed video."""
+        if self.selected_proceed_video_id:
+            threading.Thread(target=self._download_file_thread,
+                             args=(self.selected_pdf_url, self.selected_proceed_video_id, 'pdf')).start()
+        else:
+            messagebox.showwarning("No Video Selected", "Please select a proceed video to download its PDF.")
+
+    def download_excel(self) -> None:
+        """Download Excel file for the selected proceed video."""
+        if self.selected_proceed_video_id:
+            threading.Thread(target=self._download_file_thread,
+                             args=(self.selected_excel_url, self.selected_proceed_video_id, 'excel')).start()
+        else:
+            messagebox.showwarning("No Video Selected", "Please select a proceed video to download its Excel.")
+
+    def _download_file_thread(self, url: str, file_type: str) -> None:
+        try:
+            file_extension = 'pdf' if file_type == 'pdf' else 'xlsx'
+            file_name = filedialog.asksaveasfilename(defaultextension=f".{file_extension}",
+                                                     filetypes=[(f"{file_type.upper()} files", f"*.{file_extension}")])
+            if not file_name:
+                return  # User cancelled the save dialog
+
+            response = requests.get(f'{self.media_url}{url}', stream=True)
+            response.raise_for_status()
+            with open(file_name, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    f.write(chunk)
+            messagebox.showinfo("Download Successful", f"The {file_type.upper()} file was downloaded successfully!")
+            os.startfile(file_name)
+        except Exception as error:
+            print(error)
 
     def _download_video_thread(self, video_id: int) -> None:
         try:
