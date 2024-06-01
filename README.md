@@ -29,6 +29,10 @@
 
 ## Interface
 
+### web
+### desktop (отдельный readme.md для запуска)
+![desktop](images/desktop.png)
+
 ## Контакты
 DS:
 - https://github.com/jettooss
