@@ -16,6 +16,8 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.platypus.flowables import Image as ReportLabImage
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
 from tqdm import tqdm
 
@@ -229,29 +231,35 @@ def create_pdf_report(violations, output_pdf_path, frame_width, frame_height):
     doc = SimpleDocTemplate(output_pdf_path, pagesize=letter)
     elements = []
 
+    # Register a font that supports Cyrillic characters
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'path/to/DejaVuSans.ttf'))
+
     styles = getSampleStyleSheet()
+
     title_style = styles['Title']
+    title_style.fontName = 'DejaVuSans'
     title_style.fontSize = 24
     title_style.textColor = colors.darkblue
 
     normal_style = styles['Normal']
+    normal_style.fontName = 'DejaVuSans'
     normal_style.fontSize = 12
     normal_style.leading = 14
 
-    elements.append(Paragraph("Report of Violations", title_style))
+    elements.append(Paragraph("Отчет о нарушениях", title_style))
     elements.append(Spacer(1, 20))
 
-    intro_text = ("This report provides an overview of safety violations detected in the analyzed videos. "
-                  "The main purpose is to identify areas of improvement for safety compliance. "
-                  "The chart below shows the frequency of different types of violations.")
+    intro_text = ("Этот отчет предоставляет обзор нарушений безопасности, обнаруженных в анализируемых видео. "
+                  "Основная цель - выявить области для улучшения соблюдения требований безопасности. "
+                  "Диаграмма ниже показывает частоту различных типов нарушений.")
     elements.append(Paragraph(intro_text, normal_style))
     elements.append(Spacer(1, 20))
 
     for violation in violations:
-        file_text = f"File: {violation['file']}"
-        start_time_text = f"Start Time: {format_time(time_str_to_seconds(violation['start_time']))}"
-        end_time_text = f"End Time: {format_time(time_str_to_seconds(violation['end_time']))}"
-        violation_text = f"Violation: {violation['violation']}"
+        file_text = f"Файл: {violation['file']}"
+        start_time_text = f"Время начала: {format_time(time_str_to_seconds(violation['start_time']))}"
+        end_time_text = f"Время окончания: {format_time(time_str_to_seconds(violation['end_time']))}"
+        violation_text = f"Нарушение: {violation['violation']}"
 
         text_data = [
             Paragraph(file_text, normal_style),
