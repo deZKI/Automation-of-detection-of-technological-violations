@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib
 import torch
 import ultralytics
+
 matplotlib.use('Agg')  # Использование безголового backend для Matplotlib
 import pandas as pd
 import cv2
@@ -57,6 +58,7 @@ def format_time(seconds: int):
     """Функция для форматирования времени в формат HH:MM:SS"""
     return time.strftime('%H:%M:%S', time.gmtime(seconds))
 
+
 def time_str_to_seconds(time_str):
     """Конвертирует строку времени в формате HH:MM:SS в количество секунд."""
     h, m, s = map(int, time_str.split(':'))
@@ -85,8 +87,8 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo, fr
             current_violation = None
             violation_start_frame = None
             violations_logged = []
-            # Загружаем модель YOLOv8 из указанного пути
 
+            # Загружаем модель YOLOv8 из указанного пути
             model = ultralytics.YOLO('ai/best.pt')
             DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             # Определяем устройство для вычислений (используем GPU, если доступно)
@@ -100,92 +102,95 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo, fr
                     if not ret:
                         break
 
-                    frame_height, frame_width, _ = frame.shape
-                    image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    if frame_index % frame_skip == 0:
+                        frame_height, frame_width, _ = frame.shape
+                        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                    # Выполнение трекинга объектов с помощью модели YOLOv8
-                    results = model(image_rgb, conf=CONFIDENCE_THRESHOLD)
+                        # Выполнение трекинга объектов с помощью модели YOLOv8
+                        results = model(image_rgb, conf=CONFIDENCE_THRESHOLD, verbose=False)
 
-                    predictions = results[0].boxes
-                    labels = predictions.cls.cpu().numpy()
-                    boxes = predictions.xyxyn.cpu().numpy()
-                    scores = predictions.conf.cpu().numpy()
+                        predictions = results[0].boxes
+                        labels = predictions.cls.cpu().numpy()
+                        boxes = predictions.xyxyn.cpu().numpy()
+                        scores = predictions.conf.cpu().numpy()
 
-                    violations = []
+                        violations = []
 
-                    for label, box, score in zip(labels, boxes, scores):
-                        if score >= CONFIDENCE_THRESHOLD:
-                            if model.names[int(label)] == ModelNameType.PERSON.value:
-                                person_box = box
-                                has_vest = False
-                                has_helmet = False
+                        for label, box, score in zip(labels, boxes, scores):
+                            if score >= CONFIDENCE_THRESHOLD:
+                                if model.names[int(label)] == ModelNameType.PERSON.value:
+                                    person_box = box
+                                    has_vest = False
+                                    has_helmet = False
 
-                                for other_label, other_box, other_score in zip(labels, boxes, scores):
-                                    if other_score >= CONFIDENCE_THRESHOLD and not np.array_equal(other_box, person_box):
-                                        if (other_box[0] < person_box[2] and other_box[2] > person_box[0] and
-                                                other_box[1] < person_box[3] and other_box[3] > person_box[1]):
-                                            if model.names[int(other_label)] == ModelNameType.VEST.value:
-                                                has_vest = True
-                                            elif model.names[int(other_label)] == ModelNameType.HELMET.value:
-                                                has_helmet = True
-                                            elif model.names[int(other_label)] == ModelNameType.HEAT.value:
-                                                has_helmet = False
+                                    for other_label, other_box, other_score in zip(labels, boxes, scores):
+                                        if other_score >= CONFIDENCE_THRESHOLD and not np.array_equal(other_box,
+                                                                                                      person_box):
+                                            if (other_box[0] < person_box[2] and other_box[2] > person_box[0] and
+                                                    other_box[1] < person_box[3] and other_box[3] > person_box[1]):
+                                                if model.names[int(other_label)] == ModelNameType.VEST.value:
+                                                    has_vest = True
+                                                elif model.names[int(other_label)] == ModelNameType.HELMET.value:
+                                                    has_helmet = True
+                                                elif model.names[int(other_label)] == ModelNameType.HEAT.value:
+                                                    has_helmet = False
 
-                                if not has_vest or not has_helmet:
-                                    violation_type = ViolationType.MISSING_VEST.value if not has_vest else ViolationType.MISSING_HELMET.value
-                                    violations.append({
-                                        'frame': frame_index,
-                                        'time': format_time(frame_index / frame_rate),
-                                        'violation': violation_type,
-                                        'bbox': person_box.tolist()
-                                    })
+                                    if not has_vest or not has_helmet:
+                                        violation_type = ViolationType.MISSING_VEST.value if not has_vest else ViolationType.MISSING_HELMET.value
+                                        violations.append({
+                                            'frame': frame_index,
+                                            'time': format_time(frame_index / frame_rate),
+                                            'violation': violation_type,
+                                            'bbox': person_box.tolist()
+                                        })
 
-                                    if current_violation == violation_type:
-                                        continue
-                                    else:
-                                        if current_violation is not None:
-                                            duration = frame_index - violation_start_frame
-                                            if duration / frame_rate > FRAME_RATE_THRESHOLD:
-                                                violations_logged.append({
-                                                    'file': os.path.basename(original_video.video.path),
-                                                    'start_time': format_time(violation_start_frame / frame_rate),
-                                                    'end_time': format_time((frame_index - frame_skip) / frame_rate),
-                                                    'violation': current_violation,
-                                                    'frame': violation_start_frame
-                                                })
-                                        current_violation = violation_type
-                                        violation_start_frame = frame_index
+                                        if current_violation == violation_type:
+                                            continue
+                                        else:
+                                            if current_violation is not None:
+                                                duration = frame_index - violation_start_frame
+                                                if duration / frame_rate > FRAME_RATE_THRESHOLD:
+                                                    violations_logged.append({
+                                                        'file': os.path.basename(original_video.video.path),
+                                                        'start_time': format_time(violation_start_frame / frame_rate),
+                                                        'end_time': format_time(
+                                                            (frame_index - frame_skip) / frame_rate),
+                                                        'violation': current_violation,
+                                                        'frame': violation_start_frame
+                                                    })
+                                            current_violation = violation_type
+                                            violation_start_frame = frame_index
 
-                    if not violations and current_violation is not None:
-                        duration = frame_index - violation_start_frame
-                        if duration / frame_rate > FRAME_RATE_THRESHOLD:
-                            violations_logged.append({
-                                'file': os.path.basename(original_video.video.path),
-                                'start_time': format_time(violation_start_frame / frame_rate),
-                                'end_time': format_time((frame_index - frame_skip) / frame_rate),
-                                'violation': current_violation,
-                                'frame': violation_start_frame
-                            })
-                        current_violation = None
-                        violation_start_frame = None
+                        if not violations and current_violation is not None:
+                            duration = frame_index - violation_start_frame
+                            if duration / frame_rate > FRAME_RATE_THRESHOLD:
+                                violations_logged.append({
+                                    'file': os.path.basename(original_video.video.path),
+                                    'start_time': format_time(violation_start_frame / frame_rate),
+                                    'end_time': format_time((frame_index - frame_skip) / frame_rate),
+                                    'violation': current_violation,
+                                    'frame': violation_start_frame
+                                })
+                            current_violation = None
+                            violation_start_frame = None
 
-                    for violation in violations:
-                        x1, y1, x2, y2 = map(int, [
-                            violation['bbox'][0] * frame_width, violation['bbox'][1] * frame_height,
-                            violation['bbox'][2] * frame_width, violation['bbox'][3] * frame_height
-                        ])
+                        for violation in violations:
+                            x1, y1, x2, y2 = map(int, [
+                                violation['bbox'][0] * frame_width, violation['bbox'][1] * frame_height,
+                                violation['bbox'][2] * frame_width, violation['bbox'][3] * frame_height
+                            ])
 
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        cv2.putText(frame, violation['violation'], (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+                            cv2.putText(frame, violation['violation'], (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
+                                        (0, 0, 255), 2)
 
-                    frame_index += frame_skip
-
+                    frame_index += 1
                     out.write(frame)
-
-                    pbar.update(frame_skip)
+                    pbar.update(1)
 
                 cap.release()
                 out.release()
+
             for violation in violations_logged:
                 TimeCode.objects.create(
                     proceed_video=proceed_video,
