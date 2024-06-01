@@ -13,6 +13,7 @@ class ProceedVideo(models.Model):
     version = models.IntegerField(verbose_name='Версия нейросети')
     video = models.FileField(upload_to='proceed-videos/', blank=True)
     excel_file = models.FileField(upload_to='excels/', blank=True)
+    pdf_file = models.FileField(upload_to='pdf/', blank=True)
 
 
 class TimeCode(models.Model):

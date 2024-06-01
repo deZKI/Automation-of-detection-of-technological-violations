@@ -12,7 +12,7 @@ DEBUG = True
 
 # Загружаем модель YOLOv8 из указанного пути
 
-MODEL = ultralytics.YOLO('ai/last.pt')
+MODEL = ultralytics.YOLO('ai/best.pt')
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Определяем устройство для вычислений (используем GPU, если доступно)
 MODEL.to(DEVICE)
