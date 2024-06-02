@@ -232,7 +232,7 @@ def create_pdf_report(violations, output_pdf_path, frame_width, frame_height):
     elements = []
 
     # Register a font that supports Cyrillic characters
-    pdfmetrics.registerFont(TTFont('DejaVuSans', 'path/to/DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('DejaVuSans', 'ai/DejaVuSans.ttf'))
 
     styles = getSampleStyleSheet()
 
