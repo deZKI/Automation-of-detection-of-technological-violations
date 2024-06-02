@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './processedpanel.module.css';
-import {IProcessedVideoData} from '../../store/processedVideoData/processedVideoDataReducer';
+import { IProcessedVideoData } from '../../store/processedVideoData/processedVideoDataReducer';
 import {ProcessedList} from './ProcessedList';
 import {ProcessedPanelButton} from './ProcessedPanelButton';
 

@@ -17,8 +17,6 @@
   position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 20px;
   padding: 32px;
   border-radius: 52px;
   width: 100%;

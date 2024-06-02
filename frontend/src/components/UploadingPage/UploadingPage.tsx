@@ -10,11 +10,14 @@ import {ProcessedPanel} from '../ProcessedPanel';
 import {UploadingVideoButton} from './UploadVideoButton';
 import {TimestampsPanel} from '../TimestampsPanel';
 import {VideoPanel} from '../VideoPanel';
+import {IVideoPanel} from '../../store/videoPanel/videoPanelReducer';
+import { VideoContainer } from '../VideoContainer';
 
 export function UploadingPage() {
   const processedVideoData = useSelector<IInitialState, IProcessedVideoData[]>(state => state.processedVideoData.processedVideoData);
   const videoPanelIsSwitched = useSelector<IInitialState, boolean>(state => state.videoPanelIsSwitched.videoPanelIsSwitched);
   const panelIsSwitched = useSelector<IInitialState, boolean>(state => state.panelIsSwitched.panelIsSwitched);
+  const videoPanel = useSelector<IInitialState, IVideoPanel>(state => state.videoPanel.videoPanel);
   const uploadedVideos = useUploadedVideos();
 
   return (
@@ -33,9 +36,7 @@ export function UploadingPage() {
                         <UploadingText />
                       </>
                     : <>
-                        <ProcessedPanel processedVideoData={processedVideoData}  />
-                        <VideoPanel />
-                        <TimestampsPanel />
+                        <VideoContainer videoPanel={videoPanel} processedVideoData={processedVideoData} />
                       </>
             : <UploadingVideoButton />
           }

@@ -1,3 +1,4 @@
+import { ITimestamp } from "../../utils/combineObjects";
 import {initialState } from "../reducer";
 import {SET_VIDEO_PANEL, SetVideoPanelAction} from "./videoPanelActions";
 
@@ -6,6 +7,7 @@ export interface IVideoPanel {
   video: string;
   excel_file: string;
   pdf_file: string;
+  timestamps: ITimestamp[];
 }
 
 export interface IVideoPanelState {

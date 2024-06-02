@@ -1,3 +1,4 @@
+import { ITimestamp } from "../../utils/combineObjects";
 import {initialState} from "../reducer";
 import {SET_PROCESSED_VIDEO_DATA, SetProcessedVideoDataAction} from "./processedVideoDataActions";
 
@@ -9,6 +10,7 @@ export interface IProcessedVideoData {
   video: string;
   excel_file: string;
   pdf_file: string;
+  timestamps: ITimestamp[];
 }
 
 export interface IProcessedVideoDataState {

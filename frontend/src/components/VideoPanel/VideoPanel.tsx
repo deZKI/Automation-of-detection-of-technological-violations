@@ -1,30 +1,23 @@
 import React from 'react';
 import styles from './videopanel.module.css';
 import ReactPlayer from 'react-player';
-import useDownloader from 'react-use-downloader';
-import {useSelector} from 'react-redux';
 import {IVideoPanel} from '../../store/videoPanel/videoPanelReducer';
-import {IInitialState} from '../../store/reducer';
 
-export function VideoPanel() {
-  const videoPanel = useSelector<IInitialState, IVideoPanel>(state => state.videoPanel.videoPanel);
-  const {download} = useDownloader();
+interface IVideoPanelProps {
+  videoPanel: IVideoPanel;
+  playerRef: React.RefObject<ReactPlayer>;
+}
 
-  function handleClickPDF() {
-    download(videoPanel.pdf_file, 'детектирование нарушений');
-  }
-
-  function handleClickXLSX() {
-    download(videoPanel.excel_file, 'детектирование нарушений');
-  }
-
+export function VideoPanel({ videoPanel, playerRef }: IVideoPanelProps) {
+  console.log(videoPanel.pdf_file);
+  console.log(videoPanel.excel_file)
   return (
     <div className={styles.container}>
-      <ReactPlayer url={videoPanel.video} controls />
+      <ReactPlayer ref={playerRef} url={videoPanel.video} controls />
       <div className={styles.downloads}>
-        <button id="download_button-pdf" className={styles.button} onClick={handleClickPDF}>Выгрузить PDF</button>
-        <button id="download_button-xlsx" className={styles.button} onClick={handleClickXLSX}>Выгрузить XLSX</button>
+        <a id="download_button-pdf" className={styles.button} href={`http://95.163.223.21${videoPanel.pdf_file}`} target="_blank" download>Выгрузить PDF</a>
+        <a id="download_button-xlsx" className={styles.button} href={`http://95.163.223.21${videoPanel.excel_file}`} download>Выгрузить XLSX</a>
       </div>
     </div>
-  )
+  );
 }
