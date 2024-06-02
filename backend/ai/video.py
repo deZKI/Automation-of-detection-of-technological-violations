@@ -183,8 +183,8 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo, fr
                             ])
 
                             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                            cv2.putText(frame, violation['violation'], (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
-                                        (0, 0, 255), 2)
+                            # cv2.putText(frame, violation['violation'], (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9,
+                            #             (0, 0, 255), 2)
 
                     frame_index += 1
                     out.write(frame)
