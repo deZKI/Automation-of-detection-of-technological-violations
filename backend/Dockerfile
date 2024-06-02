@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     libswscale-dev \
     libgtk2.0-dev \
     libv4l-dev \
+    ffmpeg \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
