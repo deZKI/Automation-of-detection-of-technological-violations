@@ -58,6 +58,7 @@ torch==2.3.0
 torchvision==0.18.0
 tqdm==4.66.4
 typing_extensions==4.11.0
+ffmpeg-python==0.2.0
 ultralytics==8.2.22
 uritemplate==4.1.1
 urllib3==2.2.1
