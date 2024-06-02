@@ -21,6 +21,7 @@ from reportlab.pdfbase import pdfmetrics
 
 from tqdm import tqdm
 
+from m2 import split_video, run_inference_on_segments
 from django.core.files.base import ContentFile
 
 from video.models import OriginalVideo, ProceedVideo, TimeCode
@@ -39,6 +40,7 @@ OUTPUT_PDF_SUFFIX = '.pdf'
 CHART_WIDTH = 500
 CHART_HEIGHT = 300
 CHART_COLOR = 'skyblue'
+CHECKPOINT_PATH = 'slowfast_epoch_5.pth'
 
 
 class ViolationType(Enum):
@@ -60,14 +62,15 @@ def format_time(seconds: int):
     """Функция для форматирования времени в формат HH:MM:SS"""
     return time.strftime('%H:%M:%S', time.gmtime(seconds))
 
+
 import ffmpeg
 import os
 from django.core.files.base import ContentFile
 
+
 def transcode_to_h264(input_video_path, output_video_path):
     # Транскодирование видео в формат H.264
     ffmpeg.input(input_video_path).output(output_video_path, vcodec='libx264', acodec='aac').run()
-
 
 
 def time_str_to_seconds(time_str):
@@ -209,8 +212,11 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo, fr
                     time_in_seconds=time_str_to_seconds(violation['start_time'])
                 )
 
+            segment_paths = split_video(output_video_path)
+            predictions = run_inference_on_segments(segment_paths, CHECKPOINT_PATH)
+
             create_pdf_report(violations_logged, output_pdf_path, width, height)
-            save_to_excel(violations_logged, output_excel_path)
+            save_predictions_to_excel(predictions, output_excel_path)
 
             transcoded_video_path = os.path.join(temp_dir, f'transcoded_{os.path.basename(output_video_path)}')
             transcode_to_h264(output_video_path, transcoded_video_path)
@@ -311,6 +317,13 @@ def create_pdf_report(violations, output_pdf_path, frame_width, frame_height):
     doc.build(elements)
 
 
-def save_to_excel(violations, excel_path):
-    df = pd.DataFrame(violations, columns=['file', 'start_time', 'end_time', 'violation'])
+def save_predictions_to_excel(predictions, excel_path):
+    data = []
+    for prediction in predictions:
+        file_name = os.path.basename(prediction[0])
+        description = prediction[1]
+        time_interval = f"{prediction[2]} - {prediction[3]}"
+        data.append([file_name, description, time_interval])
+
+    df = pd.DataFrame(data, columns=['Файл', 'Нарушение', 'Интервал'])
     df.to_excel(excel_path, index=False)
