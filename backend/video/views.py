@@ -20,6 +20,12 @@ from .models import OriginalVideo, ProceedVideo, TimeCode
 from .serializers import OriginalVideoSerializer, ProceedVideoSerializer, TimeCodeSerializer
 
 
+from rest_framework.authentication import SessionAuthentication
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
+
 class OriginalVideoListAPIView(ModelViewSet):
     """ Получение списка оригинальных видео """
     queryset = OriginalVideo.objects.all()
