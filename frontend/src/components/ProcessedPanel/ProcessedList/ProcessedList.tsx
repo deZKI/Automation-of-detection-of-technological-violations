@@ -24,7 +24,8 @@ export function ProcessedList({ processedVideoData }: IProcessedListProps) {
           title: processedVideo.title,
           video: `http://95.163.223.21${processedVideo.video}`,
           excel_file: processedVideo.excel_file,
-          pdf_file: processedVideo.pdf_file
+          pdf_file: processedVideo.pdf_file,
+          timestamps: processedVideo.timestamps
         }));
       }
     });

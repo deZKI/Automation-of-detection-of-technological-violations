@@ -5,7 +5,7 @@ export function UploadingText() {
   return (
     <div className={styles.info}>
       <span className={styles.info__neuro}>нейро</span>
-      <span className={styles.info__desc}>готово вам помочь!</span>
+      <span className={styles.info__desc}>готов вам помочь!</span>
     </div>
   );
 }
