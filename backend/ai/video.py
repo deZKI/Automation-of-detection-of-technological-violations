@@ -60,6 +60,15 @@ def format_time(seconds: int):
     """Функция для форматирования времени в формат HH:MM:SS"""
     return time.strftime('%H:%M:%S', time.gmtime(seconds))
 
+import ffmpeg
+import os
+from django.core.files.base import ContentFile
+
+def transcode_to_h264(input_video_path, output_video_path):
+    # Транскодирование видео в формат H.264
+    ffmpeg.input(input_video_path).output(output_video_path, vcodec='libx264', acodec='aac').run()
+
+
 
 def time_str_to_seconds(time_str):
     """Конвертирует строку времени в формате HH:MM:SS в количество секунд."""
@@ -203,7 +212,10 @@ def process_video(original_video: OriginalVideo, proceed_video: ProceedVideo, fr
             create_pdf_report(violations_logged, output_pdf_path, width, height)
             save_to_excel(violations_logged, output_excel_path)
 
-            with open(output_video_path, 'rb') as f:
+            transcoded_video_path = os.path.join(temp_dir, f'transcoded_{os.path.basename(output_video_path)}')
+            transcode_to_h264(output_video_path, transcoded_video_path)
+
+            with open(transcoded_video_path, 'rb') as f:
                 """ Сохранение преобразованного видео """
                 video_content = f.read()
                 proceed_video.video.save(f'{OUTPUT_VIDEO_PREFIX}{os.path.basename(original_video.video.name)}',
