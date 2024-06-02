@@ -30,6 +30,7 @@
 ## Interface
 
 ### web
+![web](images/)
 ### desktop (отдельный readme.md для запуска)
 ![desktop](images/desktop.png)
 
