@@ -1,0 +1,49 @@
+.button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin: auto 0 0 0;
+  border-radius: 16px;
+  outline: 1px solid var(--primary-color);
+  width: 100%;
+  height: 54px;
+  background-color: transparent;
+  transition: all .3s ease;
+  cursor: pointer;
+}
+
+.desc {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 28px;
+  color: var(--primary-color);
+  transition: all .3s ease;
+}
+
+.icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon svg {
+  transform: rotate(180deg);
+  transition: all .3s ease;
+}
+
+.button:hover {
+  outline: 1px solid transparent;
+  background-color: var(--button-hover);
+}
+
+.button:hover .desc {
+  color: var(--primary-background);
+}
+
+.button:hover .icon svg {
+  fill: var(--primary-background);
+}
+

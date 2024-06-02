@@ -1,14 +1,19 @@
 import React, {useState, useEffect} from 'react';
 import './main.global.css';
 import {Provider} from "react-redux";
-import {createStore} from "redux";
 import {BrowserRouter, Route, Navigate, Routes} from "react-router-dom";
+import {composeWithDevTools} from "redux-devtools-extension";
+import {applyMiddleware, createStore} from "redux";
 import {rootReducer} from './store/reducer';
 import {Header} from './components/Header';
 import {EntryPage} from './components/EntryPage';
 import {UploadingPage} from './components/UploadingPage';
+import thunk from "redux-thunk";
 
-const store = createStore(rootReducer);
+const middleware = [thunk];
+const store = createStore(rootReducer, composeWithDevTools(
+  applyMiddleware(...middleware)
+));
 
 function AppComponent() {
   const [mounted, setMounted] = useState(false);
@@ -21,7 +26,7 @@ function AppComponent() {
           <Header />
           <Routes>
             <Route path="/" element={<EntryPage />} />
-            <Route path="/load" element={<UploadingPage />} />
+            <Route path="/load-panel" element={<UploadingPage />} />
           </Routes>
         </BrowserRouter>
       }

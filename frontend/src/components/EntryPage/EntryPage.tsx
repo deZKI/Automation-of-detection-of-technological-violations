@@ -9,7 +9,7 @@ export function EntryPage() {
           <div className={styles.intro__wrapper}>
             <h1 className={styles.intro__title}>РЖД</h1>
             <p className={styles.intro__desc}>Автоматизация выявления<br/>технологических нарушений</p>
-            <a className={styles.intro__button} href="/load">Загрузить</a>
+            <a className={styles.intro__button} href="/load-panel">Загрузить</a>
           </div>
         </div>
         <div className={styles.background}></div>
