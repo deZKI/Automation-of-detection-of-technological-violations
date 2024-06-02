@@ -13,8 +13,7 @@ export function UploadingVideoButton() {
     axios.post('http://95.163.223.21/api/videos/', formData, {
       headers: {
         'accept': 'application/json',
-        'Content-Type': 'multipart/form-data',
-        'X-CSRFToken': '1tKCiJEvIMNUH08wdOYcaSUPVYNgi9iniObQAIOVhErFJ2uOv3LOz7YdDQoDOrlx',
+        'Content-Type': 'multipart/form-data'
       }
     })
     .catch((err) => {
