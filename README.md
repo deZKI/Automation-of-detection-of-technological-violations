@@ -30,7 +30,7 @@
 ## Interface
 
 ### web
-![web](images/)
+![web](images/Снимок экрана 2024-06-02 в 13.36.43.png)
 ### desktop (отдельный readme.md для запуска)
 ![desktop](images/desktop.png)
 
