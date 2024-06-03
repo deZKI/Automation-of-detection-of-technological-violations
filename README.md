@@ -39,7 +39,9 @@
 DS:
 - https://github.com/jettooss
 - https://github.com/BogdanRoshchupkin
+
 FRONT:
-- https://github.com/MarianRoshchupkin
+- https://github.com/MarianRoshchupkin             
+
 BACKEND:
 - https://github.com/deZKI
