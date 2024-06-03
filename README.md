@@ -30,7 +30,8 @@
 ## Interface
 
 ### web
-![web](images/Снимок экрана 2024-06-02 в 13.36.43.png)
+![web0](images/web0.png)
+![web1](images/web1.png)
 ### desktop (отдельный readme.md для запуска)
 ![desktop](images/desktop.png)
 
