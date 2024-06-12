@@ -1,13 +1,13 @@
 import React from 'react';
 import styles from './loadinglist.module.css';
-import { useDispatch, useSelector } from 'react-redux'; 
+import {useDispatch, useSelector } from 'react-redux'; 
 import axios from "axios";
-import { ITimestamp } from '../../../utils/combineObjects';
-import { IInitialState } from '../../../store/reducer';
-import { setPanelIsSwitched } from '../../../store/panelIsSwitched/panelIsSwitchedActions';
-import { IProcessedVideoData } from '../../../store/processedVideoData/processedVideoDataReducer';
-import { setProcessedVideoData } from '../../../store/processedVideoData/processedVideoDataActions';
-import { IUploadedVideo } from '../../../hooks/useUploadedVideos';
+import {ITimestamp} from '../../../utils/combineObjects';
+import {IInitialState} from '../../../store/reducer';
+import {setPanelIsSwitched} from '../../../store/panelIsSwitched/panelIsSwitchedActions';
+import {IProcessedVideoData} from '../../../store/processedVideoData/processedVideoDataReducer';
+import {setProcessedVideoData} from '../../../store/processedVideoData/processedVideoDataActions';
+import {IUploadedVideo} from '../../../hooks/useUploadedVideos';
 
 interface ILoadingListProps {
   uploadedVideos: IUploadedVideo[];

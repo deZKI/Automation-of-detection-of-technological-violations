@@ -8,10 +8,8 @@ import {UploadingText} from './UploadingText';
 import {LoadingPanel} from '../LoadingPanel';
 import {ProcessedPanel} from '../ProcessedPanel';
 import {UploadingVideoButton} from './UploadVideoButton';
-import {TimestampsPanel} from '../TimestampsPanel';
-import {VideoPanel} from '../VideoPanel';
 import {IVideoPanel} from '../../store/videoPanel/videoPanelReducer';
-import { VideoContainer } from '../VideoContainer';
+import {VideoContainer } from '../VideoContainer';
 
 export function UploadingPage() {
   const processedVideoData = useSelector<IInitialState, IProcessedVideoData[]>(state => state.processedVideoData.processedVideoData);
@@ -35,9 +33,7 @@ export function UploadingPage() {
                         <ProcessedPanel processedVideoData={processedVideoData}  />
                         <UploadingText />
                       </>
-                    : <>
-                        <VideoContainer videoPanel={videoPanel} processedVideoData={processedVideoData} />
-                      </>
+                    : <VideoContainer videoPanel={videoPanel} processedVideoData={processedVideoData} />
             : <UploadingVideoButton />
           }
         </div>
